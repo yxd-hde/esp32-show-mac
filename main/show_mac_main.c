@@ -15,6 +15,7 @@
 #include <stdio.h>
 
 #define DEVICE_MAC_ADDR_BUF_LENGTH 18
+#define GPIO_BEEPER GPIO_NUM_2
 
 static const char *TAG = "show_mac";
 
@@ -52,9 +53,20 @@ esp_err_t print_wifi_mac_address(void) {
   return ESP_OK;
 }
 
+static void init_beeper(void) {
+  gpio_pad_select_gpio(GPIO_BEEPER);
+  gpio_intr_disable(GPIO_BEEPER);
+  gpio_set_direction(GPIO_BEEPER, GPIO_MODE_OUTPUT);
+}
+
 void app_main() {
+  init_beeper();
+  int level = 0;
   while (true) {
     ESP_ERROR_CHECK(print_wifi_mac_address());
-    vTaskDelay(10000 / portTICK_PERIOD_MS);
+    level ^= 1;
+    ESP_LOGI(TAG, "Beeper level: %d", level);
+    gpio_set_level(GPIO_BEEPER, level);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
